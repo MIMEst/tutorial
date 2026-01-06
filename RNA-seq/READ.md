@@ -1,37 +1,79 @@
-# RNA-seq pipeline
-1. Acessing SRA and Downloading raw fastq files
-* Data in the SRA is organized under a hierarchical structure
-* BioProject - BioSample - SRA Experiment - SRA Run
-esearch -db -sra -query PRJNA~ | efetch -format runinfo > runinfo.csv
+# RNA-seq Analysis Pipeline  
+**Gut microbiome–dependent transcriptional changes in murine colon**
 
-2. fastq-dump
-(indirect) prefetch SRR~ | fastq-dump --splite-files --gzip SRR~/SRR~.sra --out directory
-(direct) fastq-dump SRR~ --split-files --gzip --out directory
+This repository documents a reproducible RNA-seq analysis pipeline used to identify **gut microbiome–dependent effects on murine colon transcriptomes**, comparing **Germ-Free (GF)** and **SPF (WT)** mouse models.
 
-4. Quality Control/Check raw fastq file
-* Adapter Content, duplication level, sequence length distribution, GC% content are listed in FastQC report
-fastqc illumina_100K.fastq.gz
+## 📌 Dataset Information
 
-4. Trimming adapters 
-* Extremely important to check which library kit is used in your sample!
-* automatically trimglaore search for best fit adapter! 
-trim_galore illumina_100K.fastq.gz --illumina 
-trim_galore nextera_100K.fastq.gz --nextera
+- **Tissue**: Whole colon  
+- **Organism**: Mouse  
+- **Experimental groups**: Germ-Free vs SPF (WT)  
+- **BioProject**: `PRJNA752275`  
+- **Reference**:  
+  Romero R, Zarzycka A, Preussner M, Fischer F *et al.*  
+  *Selected commensals educate the intestinal vascular and immune system for immunocompetence.*  
+  **Microbiome** (2022) 10:158  
+  PMID: 36171625  
 
-5. Alignment/Mapping
-* Be aware of where you align your processed fastq files toward!
-* human/mouse genomes
-- 5.1 STAR genome indexing
-* genome: fasta, gtf file foramt 
-(human) STAR --runThreadN number_of_threads --runMode genomeGenerate --genomeDir genome_index_output_dir --genomeFastaFiles Homo_sapiens.GRCh38.dna.primary_assembly.fa --sjdbGTFfile Homo_sapiens.GRCh38.110.gtf
-- 5.2 STAR alignment 
-(human) STAR --runMode alignReads --runThreadN number_of_threads --genomeDir genome_index_output_dir --sjdbGTFfile Homo_sapiens.GRCh38.110.gtf --outSAMtype BAM SortedByCoordinate --outFilterType BySJout --outStd Log --outFileNmaePrefix ${i} --readFilesIn read_1.gz read_2.gz --readFilesCommand zcat --quantMode TranscriptomeSAM --outSAMunmappedWithin --twopassMode Basic --outFilterMultimapNmax 1
+## 🧬 Pipeline Overview
 
-6. Normalization
-* Each tool needs individual genome indexing files
-- 6.1 RSEM genome indexing 
-(human) rsem-prepare-reference --gtf Homo_sapiens.GRCh38.110.gtf --STAR Homo_sapiens.GRCh38.dna.primary_assembly.fa genome_index_output_dir
-- 6.2 RSEM normalizartion
-(human) rsem-calculate-expression input.bam --paired-end --strandedness default --no-bam-output --alignments -p number_of_threads genome_index_output_dir
+1. Download raw FASTQ files from SRA  
+2. Perform quality control (FastQC)  
+3. Adapter trimming (Trim Galore)  
+4. Alignment to reference genome (STAR)  
+5. Expression quantification & normalization (RSEM)  
+
+## ✅ Requirements
+
+Install these tools and make sure they are in your `PATH`:
+
+- NCBI Entrez Direct (`esearch`, `efetch`)
+- SRA Toolkit (`fastq-dump` or `fasterq-dump`, `prefetch`)
+- FastQC
+- Trim Galore
+- STAR
+- RSEM
+
+> Tip: use `conda`/`mamba` environments to manage dependencies.
+
+---
+
+## 1️⃣ Raw FASTQ Download
+
+### 1.1 Retrieve SRA Run Information
+
+SRA data are organized hierarchically as:
+BioProject → BioSample → SRA Experiment → SRA Run
+Download run metadata:
+
+```bash
+esearch -db sra -query PRJNA752275 | \
+efetch -format runinfo > runinfo.csv
+```
+### 1.2 Download FASTQ Files
+
+You may use either direct or indirect methods.
+Option A: Direct download (recommended)
+
+```bash
+fastq-dump SRRXXXXXXX \
+  --split-files \
+  --gzip \
+  --outdir fastq/
+```
+Option B: Indirect download via .sra (faster)
+```bash
+prefetch SRRXXXXXXX
+fastq-dump SRRXXXXXXX/SRRXXXXXXX.sra \
+  --split-files \
+  --gzip \
+  --outdir fastq/
+```
+### 2. Quality Control (FastQC)
+Inspect raw FASTQ files for:
+Adapter contamination
+Duplication levels
+Sequence length distribution
+GC content
 
 
