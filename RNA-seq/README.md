@@ -1,12 +1,16 @@
 # RNA-seq Analysis Pipeline  
 **Gut microbiome–dependent transcriptional changes in murine colon**
 
-This repository documents a reproducible RNA-seq analysis pipeline used to identify **gut microbiome–dependent effects on murine colon transcriptomes**, comparing **Germ-Free (GF)** and **SPF (WT)** mouse models.
+This repository presents a **reproducible bulk RNA-seq analysis pipeline** designed to investigate how the **gut microbiome shapes host transcriptional programs in the murine colon**. By comparing **Germ-Free (GF)** and **Specific Pathogen-Free (SPF; WT)** mouse models, this workflow enables systematic identification of microbiota-dependent gene expression changes at both the gene and transcript levels.
+
+The pipeline follows widely accepted best practices in RNA-seq analysis while emphasizing **robust preprocessing, splice-aware alignment, and statistically sound expression quantification**. All steps are modular, explicitly parameterized, and suitable for reuse in other mouse or human RNA-seq studies.
+
+---
 
 ## Dataset Information
 
 - **Tissue**: Whole colon  
-- **Organism**: Mouse  
+- **Organism**: Mouse (*Mus musculus*)  
 - **Experimental groups**: Germ-Free vs SPF (WT)  
 - **BioProject**: `PRJNA752275`  
 - **Reference**:  
@@ -15,54 +19,52 @@ This repository documents a reproducible RNA-seq analysis pipeline used to ident
   **Microbiome** (2022) 10:158  
   PMID: 36171625  
 
-## Pipeline Overview
-<img width="300" height="700" alt="image" src="https://github.com/user-attachments/assets/040dc06b-9d61-479b-8130-35b3adecd739" />
+---
 
-1. Download raw FASTQ files from SRA  
-2. Perform quality control (FastQC)  
-3. Adapter trimming (Trim Galore)  
-4. Alignment to reference genome (STAR)  
-5. Expression quantification & normalization (RSEM)  
+## Pipeline Overview and Analysis Rationale
 
-## Requirements
+<p align="center">
+  <img width="350"
+       alt="RNA-seq pipeline overview"
+       src="https://github.com/user-attachments/assets/040dc06b-9d61-479b-8130-35b3adecd739" />
+</p>
 
-Install these tools and make sure they are in your `PATH`:
+The analysis proceeds from raw sequencing reads to normalized expression estimates through the following conceptual stages:  
+(1) acquisition of raw FASTQ files,  
+(2) quality assessment of sequencing reads,  
+(3) adapter and low-quality base removal,  
+(4) splice-aware alignment to the reference genome, and  
+(5) transcript- and gene-level expression quantification.
 
-- NCBI Entrez Direct (`esearch`, `efetch`)
-- SRA Toolkit (`fastq-dump` or `fasterq-dump`, `prefetch`)
-- FastQC
-- Trim Galore
-- STAR
-- RSEM
-
-> Tip: use `conda`/`mamba` environments to manage dependencies.
+Each step is designed to minimize technical artifacts while preserving biologically meaningful signal, which is especially critical when comparing microbiome-driven phenotypes such as GF versus SPF intestinal tissue.
 
 ---
 
-## 1. Raw FASTQ Download
+## Software Requirements
 
-### 1.1 Retrieve SRA Run Information
+The following tools are required and should be available in the system `PATH`:
 
-SRA data are organized hierarchically as:
-BioProject → BioSample → SRA Experiment → SRA Run
-Download run metadata:
+- NCBI Entrez Direct (`esearch`, `efetch`)
+- SRA Toolkit (`prefetch`, `fastq-dump` or `fasterq-dump`)
+- FastQC
+- Trim Galore (Cutadapt-based)
+- STAR
+- RSEM
+
+> **Tip**: Using `conda` or `mamba` environments is strongly recommended for reproducibility and version control.
+
+---
+
+### 1. Raw Data Retrieval and Quality Control
+
+Raw sequencing data are retrieved from the NCBI Sequence Read Archive (SRA), which organizes data hierarchically as **BioProject → BioSample → Experiment → Run**. Run-level metadata are first obtained to identify individual sequencing accessions:
 
 ```bash
 esearch -db sra -query PRJNA752275 | \
 efetch -format runinfo > runinfo.csv
 ```
-### 1.2 Download FASTQ Files
 
-You may use either direct or indirect methods.
-Option A: Direct download (recommended)
-
-```bash
-fastq-dump SRRXXXXXXX \
-  --split-files \
-  --gzip \
-  --outdir fastq/
-```
-Option B: Indirect download via .sra (faster)
+FASTQ files can then be downloaded either directly or via an intermediate .sra file. For large datasets, prefetch-based downloading is recommended:  
 ```bash
 prefetch SRRXXXXXXX
 fastq-dump SRRXXXXXXX/SRRXXXXXXX.sra \
@@ -70,107 +72,91 @@ fastq-dump SRRXXXXXXX/SRRXXXXXXX.sra \
   --gzip \
   --outdir fastq/
 ```
-## 2. Quality Control (FastQC)
-Inspect raw FASTQ files for:  
-Adapter contamination  
-Duplication levels  
-Sequence length distribution  
-GC content  
+
+Initial quality control is performed using FastQC to assess adapter contamination, base quality distributions, duplication levels, GC content, and read length profiles:  
 ```bash
-fastqc XXXXXX.fasdtq.gz -outdir 2.QC/
+fastqc fastq/*.fastq.gz -outdir 2.QC/
 ```
-## 3. adapter trimming (Trim_galore)
-* Trim_galore requires both cutadapt, fastqc for adapter trimming, Low-quality base trimming, short read removal   
-* Automatically detects adapters (Illumina by default)  
-* Trim_galore removes: 3′ adapter contamination, Read-through adapters (short inserts)
-* Supports: Single-end, Paired-end  
+
+### 2. Adapter and Quality Trimming
+
+Adapter sequences and low-quality bases are removed using Trim Galore, a wrapper around Cutadapt and FastQC. This step trims Illumina adapters, removes low-quality bases from read ends (default Phred < 20), and discards reads shorter than a defined minimum length, thereby improving alignment accuracy and reducing downstream noise:  
 ```bash
 trim_galore --paired --quality 20 --length 20 \
   sample_R1.fastq.gz sample_R2.fastq.gz
 ```
 
-## 4. alignment (STAR)
-STAR Alignment Strategy
-STAR is shown to have high accuracy and outperforms other aligners by more than a factor of 50 in mapping speed, but it is memory intensive. The algorithm achieves this highly efficient mapping by performing a two-step process:
+### 3. Splice-aware Alignment with STAR
 
-Seed searching
-Clustering, stitching, and scoring
-Seed searching
-For every read that STAR aligns, STAR will search for the longest sequence that exactly matches one or more locations on the reference genome. These longest matching sequences are called the Maximal Mappable Prefixes (MMPs):  
-<img width="350" height="269" alt="image" src="https://github.com/user-attachments/assets/d3985f6f-e474-450a-ae2e-c7fca751185d" />
+Trimmed reads are aligned to the mouse reference genome using STAR, a splice-aware aligner optimized for RNA-seq. STAR achieves high accuracy and exceptional speed by identifying Maximal Mappable Prefixes (MMPs) through suffix-array–based searching.
 
-The different parts of the read that are mapped separately are called ‘seeds’. So the first MMP that is mapped to the genome is called seed1.
+<p align="center"> <img width="350" alt="STAR seed searching" src="https://github.com/user-attachments/assets/d3985f6f-e474-450a-ae2e-c7fca751185d" /> </p>
 
-STAR will then search again for only the unmapped portion of the read to find the next longest sequence that exactly matches the reference genome, or the next MMP, which will be seed2.  
-<img width="350" height="204" alt="image" src="https://github.com/user-attachments/assets/57ce4c8f-26b8-4ce5-b3ac-0e317f5fe5d8" />
+STAR iteratively maps the longest exact matches of each read (seeds) to the genome, then continues searching only the unmapped portions of the read:
 
-This sequential searching of only the unmapped portions of reads underlies the efficiency of the STAR algorithm. STAR uses an uncompressed suffix array (SA) to efficiently search for the MMPs, this allows for quick searching against even the largest reference genomes. Other slower aligners use algorithms that often search for the entire read sequence before splitting reads and performing iterative rounds of mapping.
+<p align="center"> <img width="350" alt="STAR multiple seeds" src="https://github.com/user-attachments/assets/57ce4c8f-26b8-4ce5-b3ac-0e317f5fe5d8" /> </p>
 
-If STAR does not find an exact matching sequence for each part of the read due to mismatches or indels, the previous MMPs will be extended.  
-<img width="350" height="460" alt="image" src="https://github.com/user-attachments/assets/94edd35d-c350-4d60-81c1-cd31ad1ff81e" />
+When mismatches or indels prevent perfect matches, STAR extends alignments or applies soft clipping to low-quality or contaminating regions:
 
-If extension does not give a good alignment, then the poor quality or adapter sequence (or other contaminating sequence) will be soft clipped.  
-<img width="350" height="213" alt="image" src="https://github.com/user-attachments/assets/4a74e78b-117b-4820-89f1-0b725628bd89" />
+<p align="center"> <img width="350" alt="STAR extension and clipping" src="https://github.com/user-attachments/assets/94edd35d-c350-4d60-81c1-cd31ad1ff81e" /> </p>
 
-Clustering, stitching, and scoring
-The separate seeds are stitched together to create a complete read by first clustering the seeds together based on proximity to a set of ‘anchor’ seeds, or seeds that are not multi-mapping.
+Mapped seeds are then clustered, stitched, and scored to generate full-length spliced alignments:
 
-Then the seeds are stitched together based on the best alignment for the read (scoring based on mismatches, indels, gaps, etc.).  
-<img width="350" height="288" alt="image" src="https://github.com/user-attachments/assets/6a9065db-8256-4fd9-adc2-4b71b129b7aa" />
+<p align="center"> <img width="350" alt="STAR stitching" src="https://github.com/user-attachments/assets/6a9065db-8256-4fd9-adc2-4b71b129b7aa" /> </p>
 
-### Download mouse genome and gtf file 
-GENCODE only provides human and mouse annotations. The genome and annotation files can be found from GENCODE website.
-Download and decompress the mouse genome and GTF files:  
+Before alignment, the mouse reference genome and annotation are downloaded from GENCODE and indexed:  
+
 ```bash
 wget https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_mouse/release_M38/GRCm39.primary_assembly.genome.fa.gz
 wget https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_mouse/release_M38/gencode.vM38.annotation.gtf.gz
 ```
-
-### 4.1 Creat a genome index
-building mouse/human genome index  
-(!please be aware of your dataset!)
 ```bash
 STAR --runThreadN 128 \
 --runMode genomeGenerate \
 --genomeDir ${genome_dir} \
 --genomeFastaFiles ${genome.fa} \
---sjdbGTFfile ${genome.gtf} \
---outdir ${output_dir}
+--sjdbGTFfile ${genome.gtf}
 ```
-
-### 4.2 Map reads to the genome
-After generating genome index, align paired reads into mouse/human genome
+Reads are then aligned and simultaneously projected into transcriptome coordinates for downstream quantification:  
 ```bash
-STAR --runMode alignReads \
---runThreadN 128 \
+STAR --runThreadN 128 \
 --genomeDir ${star_index_dir} \
---outSAMtype BAM SortedByCoordinate \
---outFilterType BySJout \
---outStd Log --outFileNamePrefix 4.align/${sample} \
 --readFilesIn ${sample_R1} ${sample_R2} \
 --readFilesCommand zcat \
---quantMode TranscriptomeSAM --limitBAMsortRAM 10000000000
+--outSAMtype BAM SortedByCoordinate \
+--quantMode TranscriptomeSAM \
+--outFileNamePrefix 4.align/${sample}
 ```
 
-## 5. Normalization (RSEM)
-The rsem-calculate-expression script handles both the alignment of reads against reference transcript sequences and the calculation of relative abundances. By default, RSEM uses the Bowtie alignment program to align reads, with parameters specifically chosen for RNA-Seq quantification. Alternatively, users may manually run a different alignment program and provide alignments in SAM format to rsem-calculate-expression  
-<img width="300" height="700" alt="image" src="https://github.com/user-attachments/assets/90c22704-6cb2-4393-893f-40e174aceccc" />  
+### 4. Expression Quantification and Normalization with RSEM
 
-RSEM is also two-step process proceeding genome indexing and normalization
+Expression levels are estimated using RSEM, which models read generation and assignment probabilistically to account for multi-mapping reads and transcript length bias. RSEM produces gene- and isoform-level estimates such as expected counts, TPM, and FPKM values.
 
-### 5.1 Create genome index
-Preparing Reference Sequences
+<p align="center"> <img width="350" alt="RSEM workflow" src="https://github.com/user-attachments/assets/90c22704-6cb2-4393-893f-40e174aceccc" /> </p>
+
+First, a reference is prepared using the genome and GTF annotation:
+
 ```bash
-rsem-prepare-reference --gtf ${gtf} --STAR ${genome.fa} ${output_dir}
+rsem-prepare-reference \
+  --gtf ${gtf} \
+  --STAR \
+  ${genome.fa} ${rsem_index}
 ```
 
-### 5.2 Estimate gene and isoform expression
-Calculating Expression Values
+Expression is then quantified from STAR-aligned transcriptome BAM files:
+
 ```bash
-rsem-calculate-expression --paired-end --no-bam-output --alignments -p 128 ${sample_Aligned.toTranscriptome.out.bam} \
-${rsem_genome_index} 5.normalize/${sample}
+rsem-calculate-expression \
+  --paired-end \
+  --alignments \
+  -p 128 \
+  ${sample_Aligned.toTranscriptome.out.bam} \
+  ${rsem_index} \
+  5.normalize/${sample}
 ```
 
+The resulting expression matrices can be directly used for downstream differential expression analysis using tools such as DESeq2 or edgeR, enabling systematic comparison of GF and SPF transcriptional programs.
 
 
-
+---
+Good luck! JHK 
