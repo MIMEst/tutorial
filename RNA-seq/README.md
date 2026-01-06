@@ -159,4 +159,4 @@ The resulting expression matrices can be directly used for downstream differenti
 
 
 ---
-Good luck! JHK 
+Good luck with your bioinformatic journey! 
