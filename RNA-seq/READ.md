@@ -2,13 +2,13 @@
 1. Acessing SRA and Downloading raw fastq files
 * Data in the SRA is organized under a hierarchical structure
 * BioProject - BioSample - SRA Experiment - SRA Run
-esearch -db -sra -query PRJNA~ (bioproject) | efetch -format runinfo > runinfo.csv
+esearch -db -sra -query PRJNA~ | efetch -format runinfo > runinfo.csv
 
 2. fastq-dump
 (indirect) prefetch SRR~ | fastq-dump --splite-files --gzip SRR~/SRR~.sra --out directory
 (direct) fastq-dump SRR~ --split-files --gzip --out directory
 
-3. Quality Control/Check raw fastq file
+4. Quality Control/Check raw fastq file
 * Adapter Content, duplication level, sequence length distribution, GC% content are listed in FastQC report
 fastqc illumina_100K.fastq.gz
 
