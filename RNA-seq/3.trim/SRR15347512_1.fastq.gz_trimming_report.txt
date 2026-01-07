@@ -1,0 +1,154 @@
+
+SUMMARISING RUN PARAMETERS
+==========================
+Input filename: SRR15347512_1.fastq.gz
+Trimming mode: paired-end
+Trim Galore version: 0.6.10
+Cutadapt version: 5.0
+Number of cores used for trimming: 1
+Quality Phred score cutoff: 20
+Quality encoding type selected: ASCII+33
+Using Illumina adapter for trimming (count: 15400). Second best hit was Nextera (count: 4)
+Adapter sequence: 'AGATCGGAAGAGC' (Illumina TruSeq, Sanger iPCR; auto-detected)
+Maximum trimming error rate: 0.1 (default)
+Minimum required adapter overlap (stringency): 1 bp
+Minimum required sequence length for both reads before a sequence pair gets removed: 20 bp
+Output file will be GZIP compressed
+
+
+This is cutadapt 5.0 with Python 3.12.2
+Command line parameters: -j 1 -e 0.1 -q 20 -O 1 -a AGATCGGAAGAGC SRR15347512_1.fastq.gz
+Processing single-end reads on 1 core ...
+
+=== Summary ===
+
+Total reads processed:              41,295,732
+Reads with adapters:                15,416,375 (37.3%)
+Reads written (passing filters):    41,295,732 (100.0%)
+
+Total basepairs processed: 4,129,573,200 bp
+Quality-trimmed:               1,319,223 bp (0.0%)
+Total written (filtered):  4,039,181,611 bp (97.8%)
+
+=== Adapter 1 ===
+
+Sequence: AGATCGGAAGAGC; Type: regular 3'; Length: 13; Trimmed: 15416375 times
+
+Minimum overlap: 1
+No. of allowed errors:
+1-9 bp: 0; 10-13 bp: 1
+
+Bases preceding removed adapters:
+  A: 26.2%
+  C: 31.6%
+  G: 20.9%
+  T: 18.0%
+  none/other: 3.2%
+
+Overview of removed sequences
+length	count	expect	max.err	error counts
+1	9475181	10323933.0	0	9475181
+2	3034493	2580983.2	0	3034493
+3	932698	645245.8	0	932698
+4	254902	161311.5	0	254902
+5	129088	40327.9	0	129088
+6	87444	10082.0	0	87444
+7	77817	2520.5	0	77817
+8	70413	630.1	0	70413
+9	66925	157.5	0	66198 727
+10	62107	39.4	1	59280 2827
+11	56791	9.8	1	54546 2245
+12	53688	2.5	1	51804 1884
+13	49994	0.6	1	48228 1766
+14	46625	0.6	1	44873 1752
+15	43713	0.6	1	42165 1548
+16	40477	0.6	1	38983 1494
+17	36362	0.6	1	34986 1376
+18	32995	0.6	1	31783 1212
+19	29352	0.6	1	28279 1073
+20	26106	0.6	1	25142 964
+21	24485	0.6	1	23536 949
+22	22111	0.6	1	21342 769
+23	20690	0.6	1	19968 722
+24	19677	0.6	1	18848 829
+25	18148	0.6	1	17438 710
+26	16128	0.6	1	15522 606
+27	15459	0.6	1	14865 594
+28	13673	0.6	1	13098 575
+29	12060	0.6	1	11545 515
+30	10946	0.6	1	10481 465
+31	9865	0.6	1	9465 400
+32	9008	0.6	1	8634 374
+33	8244	0.6	1	7856 388
+34	7735	0.6	1	7413 322
+35	7115	0.6	1	6826 289
+36	6850	0.6	1	6567 283
+37	6701	0.6	1	6365 336
+38	6191	0.6	1	5892 299
+39	5654	0.6	1	5383 271
+40	5198	0.6	1	4964 234
+41	4637	0.6	1	4366 271
+42	4353	0.6	1	4034 319
+43	3673	0.6	1	3343 330
+44	3406	0.6	1	3134 272
+45	5520	0.6	1	5260 260
+46	676	0.6	1	561 115
+47	2566	0.6	1	2445 121
+48	2910	0.6	1	2748 162
+49	2722	0.6	1	2612 110
+50	2458	0.6	1	2314 144
+51	2584	0.6	1	2455 129
+52	2085	0.6	1	1974 111
+53	1732	0.6	1	1619 113
+54	1626	0.6	1	1498 128
+55	1555	0.6	1	1435 120
+56	1458	0.6	1	1298 160
+57	1721	0.6	1	1445 276
+58	1431	0.6	1	1260 171
+59	1626	0.6	1	1486 140
+60	1340	0.6	1	1182 158
+61	1005	0.6	1	897 108
+62	1410	0.6	1	1248 162
+63	1301	0.6	1	1155 146
+64	947	0.6	1	787 160
+65	836	0.6	1	714 122
+66	1093	0.6	1	991 102
+67	747	0.6	1	636 111
+68	1135	0.6	1	1003 132
+69	1200	0.6	1	1030 170
+70	1632	0.6	1	1508 124
+71	103	0.6	1	29 74
+72	239	0.6	1	39 200
+73	506	0.6	1	415 91
+74	542	0.6	1	459 83
+75	548	0.6	1	399 149
+76	477	0.6	1	359 118
+77	455	0.6	1	291 164
+78	485	0.6	1	344 141
+79	419	0.6	1	268 151
+80	315	0.6	1	203 112
+81	224	0.6	1	141 83
+82	235	0.6	1	128 107
+83	182	0.6	1	54 128
+84	176	0.6	1	57 119
+85	129	0.6	1	68 61
+86	186	0.6	1	76 110
+87	218	0.6	1	116 102
+88	165	0.6	1	57 108
+89	259	0.6	1	97 162
+90	198	0.6	1	58 140
+91	358	0.6	1	57 301
+92	140	0.6	1	39 101
+93	202	0.6	1	62 140
+94	214	0.6	1	57 157
+95	265	0.6	1	39 226
+96	308	0.6	1	53 255
+97	780	0.6	1	114 666
+98	1061	0.6	1	112 949
+99	4241	0.6	1	448 3793
+100	488251	0.6	1	25557 462694
+
+RUN STATISTICS FOR INPUT FILE: SRR15347512_1.fastq.gz
+=============================================
+41295732 sequences processed in total
+
