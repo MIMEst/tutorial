@@ -105,7 +105,7 @@ Mapped seeds are then clustered, stitched, and scored to generate full-length sp
 <p align="center"> <img width="350" alt="STAR stitching" src="https://github.com/user-attachments/assets/6a9065db-8256-4fd9-adc2-4b71b129b7aa" /> </p>
 
 Before alignment, the mouse reference genome and annotation are downloaded from GENCODE and indexed:  
-
+* genome indeix is already built! 
 ```bash
 wget https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_mouse/release_M38/GRCm39.primary_assembly.genome.fa.gz
 wget https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_mouse/release_M38/gencode.vM38.annotation.gtf.gz
@@ -135,7 +135,7 @@ Expression levels are estimated using RSEM, which models read generation and ass
 <p align="center"> <img width="350" alt="RSEM workflow" src="https://github.com/user-attachments/assets/90c22704-6cb2-4393-893f-40e174aceccc" /> </p>
 
 First, a reference is prepared using the genome and GTF annotation:
-
+* genome indeix is already built! 
 ```bash
 rsem-prepare-reference \
   --gtf ${gtf} \
