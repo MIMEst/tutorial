@@ -160,3 +160,4 @@ The resulting expression matrices can be directly used for downstream differenti
 
 ---
 Good luck with your bioinformatic journey! 
+lecture slides were downloaded from NGS_biofinormatics_lecture (Prof. Jongkyung Kim, Lab. Computational Biology)
