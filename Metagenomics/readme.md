@@ -102,7 +102,7 @@ fastqc data/raw_fastq/*.fastq.gz -o results/01_qc
 multiqc results/01_qc -o results/01_qc
 ```
 
-2. DADA2 Pipeline (ASV inference)
+## 2. DADA2 Pipeline (ASV inference)
 
 Create and run: scripts/01_dada2_pipeline.R
 ```bash
