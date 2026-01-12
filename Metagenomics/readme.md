@@ -100,6 +100,8 @@ If your files use a different pattern (e.g., `_1`/`_2`, `L001`, etc.), just adju
 mkdir -p results/01_qc
 fastqc data/raw_fastq/*.fastq.gz -o results/01_qc
 multiqc results/01_qc -o results/01_qc
+```
+
 2. DADA2 Pipeline (ASV inference)
 
 Create and run: scripts/01_dada2_pipeline.R
